@@ -65,7 +65,6 @@ ORDER BY g.term DESC, c.code, s.program;
 -- courses_taught: lista de cursos que imparte
 -- Filtros: term , paginación (page, limit)
 -- HAVING: solo docentes con al menos 1 grupo
--- ============================================
 
 CREATE OR REPLACE VIEW vw_teacher_load AS
 SELECT 
@@ -115,7 +114,6 @@ ORDER BY g.term DESC, total_students DESC;
 --   - risk_factors: factores de riesgo identificados
 -- Filtros esperados: search (name/email), paginación (page, limit)
 -- CTE: calcula estadísticas de cada estudiante antes de filtrar
--- ============================================
 
 CREATE OR REPLACE VIEW vw_students_at_risk AS
 WITH student_stats AS (
@@ -215,8 +213,26 @@ ORDER BY
 --   - attendance_category: categorización del grupo (EXCELLENT, GOOD, REGULAR, POOR)
 -- Filtros esperados: term
 -- CASE/COALESCE: manejo de valores nulos y categorización
-
 CREATE OR REPLACE VIEW vw_attendance_by_group AS
+WITH student_attendance_rates AS (
+    -- CTE: Calcular tasa de asistencia por estudiante
+    SELECT 
+        e.id AS enrollment_id,
+        e.group_id,
+        COUNT(a.id) AS total_classes_student,
+        COUNT(CASE WHEN a.present = TRUE THEN 1 END) AS classes_attended,
+        COALESCE(
+            ROUND(
+                (COUNT(CASE WHEN a.present = TRUE THEN 1 END)::DECIMAL / 
+                 NULLIF(COUNT(a.id), 0)) * 100,
+                2
+            ),
+            0
+        ) AS attendance_rate
+    FROM enrollments e
+    LEFT JOIN attendance a ON e.id = a.enrollment_id
+    GROUP BY e.id, e.group_id
+)
 SELECT 
     g.id AS group_id,
     c.code AS course_code,
@@ -224,70 +240,22 @@ SELECT
     t.name AS teacher_name,
     g.term,
     COUNT(DISTINCT e.student_id) AS total_students,
-    COALESCE(COUNT(DISTINCT a.date), 0) AS total_classes,
-    ROUND(
-        COALESCE(
-            AVG(
-                CASE 
-                    WHEN a.id IS NOT NULL THEN 
-                        (COUNT(CASE WHEN a.present = TRUE THEN 1 END) OVER (PARTITION BY e.id)::DECIMAL / 
-                         NULLIF(COUNT(a.id) OVER (PARTITION BY e.id), 0)) * 100
-                    ELSE 0 
-                END
-            ),
-            0
-        ),
-        2
-    ) AS avg_attendance_rate,
-    COUNT(DISTINCT CASE 
-        WHEN (
-            SELECT (COUNT(CASE WHEN a2.present = TRUE THEN 1 END)::DECIMAL / 
-                    NULLIF(COUNT(a2.id), 0)) * 100
-            FROM attendance a2 
-            WHERE a2.enrollment_id = e.id
-        ) > 80 THEN e.student_id 
-    END) AS students_good_attendance,
-    COUNT(DISTINCT CASE 
-        WHEN (
-            SELECT (COUNT(CASE WHEN a2.present = TRUE THEN 1 END)::DECIMAL / 
-                    NULLIF(COUNT(a2.id), 0)) * 100
-            FROM attendance a2 
-            WHERE a2.enrollment_id = e.id
-        ) < 70 THEN e.student_id 
-    END) AS students_poor_attendance,
-    -- Categorización usando CASE
+    COALESCE(MAX(sar.total_classes_student), 0) AS total_classes,
+    COALESCE(ROUND(AVG(sar.attendance_rate), 2), 0) AS avg_attendance_rate,
+    COUNT(DISTINCT CASE WHEN sar.attendance_rate > 80 THEN e.student_id END) AS students_good_attendance,
+    COUNT(DISTINCT CASE WHEN sar.attendance_rate < 70 THEN e.student_id END) AS students_poor_attendance,
+ 
     CASE 
-        WHEN COALESCE(
-            AVG(
-                (SELECT (COUNT(CASE WHEN a2.present = TRUE THEN 1 END)::DECIMAL / 
-                         NULLIF(COUNT(a2.id), 0)) * 100
-                 FROM attendance a2 
-                 WHERE a2.enrollment_id = e.id)
-            ), 0
-        ) >= 90 THEN 'EXCELLENT'
-        WHEN COALESCE(
-            AVG(
-                (SELECT (COUNT(CASE WHEN a2.present = TRUE THEN 1 END)::DECIMAL / 
-                         NULLIF(COUNT(a2.id), 0)) * 100
-                 FROM attendance a2 
-                 WHERE a2.enrollment_id = e.id)
-            ), 0
-        ) >= 80 THEN 'GOOD'
-        WHEN COALESCE(
-            AVG(
-                (SELECT (COUNT(CASE WHEN a2.present = TRUE THEN 1 END)::DECIMAL / 
-                         NULLIF(COUNT(a2.id), 0)) * 100
-                 FROM attendance a2 
-                 WHERE a2.enrollment_id = e.id)
-            ), 0
-        ) >= 70 THEN 'REGULAR'
+        WHEN COALESCE(AVG(sar.attendance_rate), 0) >= 90 THEN 'EXCELLENT'
+        WHEN COALESCE(AVG(sar.attendance_rate), 0) >= 80 THEN 'GOOD'
+        WHEN COALESCE(AVG(sar.attendance_rate), 0) >= 70 THEN 'REGULAR'
         ELSE 'POOR'
     END AS attendance_category
 FROM groups g
 INNER JOIN courses c ON g.course_id = c.id
 INNER JOIN teachers t ON g.teacher_id = t.id
 INNER JOIN enrollments e ON g.id = e.group_id
-LEFT JOIN attendance a ON e.id = a.enrollment_id
+LEFT JOIN student_attendance_rates sar ON e.id = sar.enrollment_id
 GROUP BY g.id, c.code, c.name, t.name, g.term
 HAVING COUNT(DISTINCT e.student_id) > 0
 ORDER BY g.term DESC, avg_attendance_rate DESC;
@@ -304,7 +272,7 @@ ORDER BY g.term DESC, avg_attendance_rate DESC;
 
 
 -- VIEW 5: vw_rank_students (con Window Functions)
--- Descripción: Ranking de estudiantes por rendimiento académico
+-- Descripción: es el ranking de estudiantes por rendimiento académico
 -- Grain: 1 fila por estudiante + programa + término
 -- Métricas:
 --   - avg_grade: promedio de calificaciones
