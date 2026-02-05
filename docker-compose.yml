@@ -21,7 +21,7 @@ services:
     
     # Puerto expuesto (host:container)
     ports:
-      - "5437:5432"
+      - "5438:5432"
     
     # Volúmenes para persistencia y scripts SQL
     volumes:
