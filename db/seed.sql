@@ -1,8 +1,6 @@
 TRUNCATE TABLE attendance, grades, enrollments, groups, courses, teachers, students RESTART IDENTITY CASCADE;
 
--- ============================================
--- 1. ESTUDIANTES (15 estudiantes en 3 programas)
--- ============================================
+--  estudientes (15 estudiantes en 3 programas)
 INSERT INTO students (name, email, program, enrollment_year) VALUES
 -- Ingeniería en Sistemas (ISC)
 ('Juan Pérez García', 'juan.perez@mail.com', 'ISC', 2022),
