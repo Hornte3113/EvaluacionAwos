@@ -8,7 +8,7 @@ export const PaginationSchema = z.object({
 
 // Esquema para filtro de término (obligatorio en performance)
 export const TermFilterSchema = z.object({
-  term: z.string().min(1, 'El término es obligatorio'),
+  term: z.string().min(1, 'El término es obligatorio').default('2024-1'),
   program: z.string().optional(),
 });
 
