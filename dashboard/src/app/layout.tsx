@@ -56,7 +56,7 @@ export default function RootLayout({
                       className="text-emerald-50 hover:bg-emerald-700 group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors"
 
                     >
-                      <item.icon className="mr-3 flex-shrink-0 h-6 w-6 text-indigo-300" aria-hidden="true" />
+                      <item.icon className="mr-3 flex-shrink-0 h-6 w-6 text-emerald-200" aria-hidden="true" />
                       {item.name}
                     </Link>
                   ))}
