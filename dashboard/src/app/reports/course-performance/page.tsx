@@ -103,10 +103,8 @@ export default async function PerformanceReport({
             >
               <option value="">Todos los programas</option>
               <option value="ISC">ISC</option>
-              <option value="II">II</option>
-              <option value="IM">IM</option>
-              <option value="IGE">IGE</option>
-              <option value="LA">LA</option>
+              <option value="IND">IND</option>
+              <option value="ADM">ADM</option>
             </select>
           </div>
           <button
