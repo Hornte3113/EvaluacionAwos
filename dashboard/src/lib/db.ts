@@ -3,31 +3,25 @@ import { Pool } from 'pg';
 // Pool de conexiones a PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Configuración adicional
-  max: 20, // Máximo 20 conexiones
+  max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
 
-// Función helper para ejecutar queries
 export async function query<T = any>(
   text: string,
   params?: any[]
 ): Promise<T[]> {
-  const start = Date.now();
-  
+  const client = await pool.connect();
   try {
-    const result = await pool.query(text, params);
-    const duration = Date.now() - start;
-    
-    console.log('Query ejecutada:', { text, duration, rows: result.rowCount });
-    
-    return result.rows as T[];
+    const result = await client.query(text, params);
+    return result.rows;
   } catch (error) {
-    console.error('Error en query:', error);
+    console.error('Database query error:', error);
     throw error;
+  } finally {
+    client.release();
   }
 }
 
-// Exportar el pool por si se necesita
 export default pool;
