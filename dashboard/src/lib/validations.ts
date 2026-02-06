@@ -23,7 +23,7 @@ export const SearchSchema = z.object({
 export const ALLOWED_PROGRAMS = ['ISC', 'IND', 'ADM'] as const;
 
 export const ProgramFilterSchema = z.object({
-  program: z.enum(ALLOWED_PROGRAMS),
+  program: z.enum(ALLOWED_PROGRAMS).default('ISC'),
   term: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
