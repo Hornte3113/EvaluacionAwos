@@ -19,7 +19,7 @@ export default function DashboardHome() {
     },
     { 
       title: "Carga Docente", 
-      href: "/reports/teachers", 
+      href: "/reports/teacher-load",
       description: "Total de estudiantes y grupos asignados a cada profesor activo.", 
       icon: UserGroupIcon,
       color: "bg-green-500"
