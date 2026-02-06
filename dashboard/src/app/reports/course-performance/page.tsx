@@ -5,10 +5,10 @@ import { TermFilterSchema } from '@/lib/validations';
 export default async function PerformanceReport({
   searchParams,
 }: {
-  searchParams: { term?: string; program?: string };
+  searchParams: Promise<{ term?: string; program?: string }>;
 }) {
   // Validar parámetros con Zod
-  const validated = TermFilterSchema.safeParse(searchParams);
+  const validated = TermFilterSchema.safeParse(await searchParams);
 
   if (!validated.success) {
     return (
