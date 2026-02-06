@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 // Definimos los enlaces del sidebar
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Rendimiento Cursos', href: '/reports/performance', icon: ChartBarIcon },
+  { name: 'Rendimiento Cursos', href: '/reports/course-performance', icon: ChartBarIcon },
   { name: 'Carga Docente', href: '/reports/teachers', icon: UserGroupIcon },
   { name: 'Estudiantes en Riesgo', href: '/reports/risk', icon: ExclamationTriangleIcon },
   { name: 'Asistencia Grupal', href: '/reports/attendance', icon: ClipboardDocumentCheckIcon },
