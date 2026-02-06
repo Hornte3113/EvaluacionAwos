@@ -176,7 +176,7 @@ export default async function RankingReport({
       {/* Top 3 Destacados */}
       {data.length > 0 && page === 1 && (
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">🏆 Top 3 Estudiantes</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Top 3 Estudiantes</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {data.slice(0, 3).map((student, index) => (
               <div
@@ -187,7 +187,7 @@ export default async function RankingReport({
               >
                 <div className="flex items-center mb-2">
                   <span className="text-3xl mr-3">
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    {index === 0 ? '1' : index === 1 ? '2' : '3'}
                   </span>
                   <div className="flex-1">
                     <p className="font-bold text-gray-900">{student.student_name}</p>
