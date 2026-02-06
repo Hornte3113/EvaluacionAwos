@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Rendimiento Cursos', href: '/reports/course-performance', icon: ChartBarIcon },
-  { name: 'Carga Docente', href: '/reports/teachers', icon: UserGroupIcon },
+  { name: 'Carga Docente', href: '/reports/teacher-load', icon: UserGroupIcon },
   { name: 'Estudiantes en Riesgo', href: '/reports/risk', icon: ExclamationTriangleIcon },
   { name: 'Asistencia Grupal', href: '/reports/attendance', icon: ClipboardDocumentCheckIcon },
   { name: 'Ranking Académico', href: '/reports/ranking', icon: TrophyIcon },
