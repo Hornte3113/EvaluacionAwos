@@ -44,7 +44,7 @@ export default function RootLayout({
             <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4 mb-5">
                  {/* Título del sistema */}
-                <h1 className="text-white text-xl font-bold tracking-wider">Dashboard escolar</h1>
+                <h1 className="text-white text-xl font-bold tracking-wider">Classroom 2.1</h1>
               </div>
               <nav className="mt-5 flex-1 flex flex-col divide-y divide-emerald-700
  overflow-y-auto px-2">
