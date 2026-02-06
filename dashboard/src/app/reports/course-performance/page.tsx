@@ -36,7 +36,21 @@ export default async function PerformanceReport({
   sqlQuery += ` ORDER BY pass_rate DESC`;
 
   // Ejecutar query
-  const data = await query<CoursePerformance>(sqlQuery, params);
+  const raw = await query<CoursePerformance>(sqlQuery, params);
+
+  // pg devuelve campos numeric como string, convertimos a number
+  const data = raw.map(row => ({
+    ...row,
+    total_students: Number(row.total_students),
+    avg_grade: Number(row.avg_grade),
+    passed_students: Number(row.passed_students),
+    failed_students: Number(row.failed_students),
+    pass_rate: Number(row.pass_rate),
+    excellent_students: Number(row.excellent_students),
+    min_grade: Number(row.min_grade),
+    max_grade: Number(row.max_grade),
+    credits: Number(row.credits),
+  }));
 
   // Calcular KPIs
   const totalStudents = data.reduce((sum, row) => sum + row.total_students, 0);
