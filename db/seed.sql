@@ -46,16 +46,14 @@ INSERT INTO courses (code, name, credits) VALUES
 ('ING101', 'Inglés I', 3),
 ('FIS101', 'Física I', 6);
 
--- ============================================
 -- 4. GRUPOS (20 grupos en 3 términos)
--- ============================================
 -- Formato: course_id, teacher_id, term
 
 -- Término 2024-1 (8 grupos)
 INSERT INTO groups (course_id, teacher_id, term) VALUES
 (1, 1, '2024-1'), -- MAT101 con Dr. Alberto
 (2, 2, '2024-1'), -- PRG101 con Dra. Beatriz
-(3, 3, '2024-1'), -- BDA101 con Mtro. César
+(3, 3, '2024-1'), -- BDA101 con Mtro. rodolfo
 (4, 4, '2024-1'), -- EST101 con Dra. Diana
 (5, 5, '2024-1'), -- CON101 con Mtro. Eduardo
 (6, 1, '2024-1'), -- ADM101 con Dr. Alberto
@@ -65,7 +63,7 @@ INSERT INTO groups (course_id, teacher_id, term) VALUES
 -- Término 2024-2 (8 grupos)
 INSERT INTO groups (course_id, teacher_id, term) VALUES
 (1, 2, '2024-2'), -- MAT101 con Dra. Beatriz
-(2, 3, '2024-2'), -- PRG101 con Mtro. César
+(2, 3, '2024-2'), -- PRG101 con Mtro. rodolfo
 (3, 4, '2024-2'), -- BDA101 con Dra. Diana
 (4, 5, '2024-2'), -- EST101 con Mtro. Eduardo
 (5, 1, '2024-2'), -- CON101 con Dr. Alberto
@@ -77,7 +75,7 @@ INSERT INTO groups (course_id, teacher_id, term) VALUES
 INSERT INTO groups (course_id, teacher_id, term) VALUES
 (1, 1, '2025-1'), -- MAT101 con Dr. Alberto
 (2, 2, '2025-1'), -- PRG101 con Dra. Beatriz
-(3, 3, '2025-1'), -- BDA101 con Mtro. César
+(3, 3, '2025-1'), -- BDA101 con Mtro. rodolfo
 (4, 4, '2025-1'); -- EST101 con Dra. Diana
 
 -- ============================================
@@ -173,9 +171,7 @@ INSERT INTO enrollments (student_id, group_id, enrolled_at) VALUES
 (14, 18, '2025-01-10 09:00:00'),
 (15, 18, '2025-01-10 10:00:00');
 
--- ============================================
 -- 6. CALIFICACIONES (grades)
--- ============================================
 -- Casos variados: aprobados, reprobados, excelentes
 
 -- Término 2024-1 - Grupo 1 (MAT101)
@@ -264,9 +260,7 @@ INSERT INTO grades (enrollment_id, partial1, partial2, final) VALUES
 (52, 92.00, 94.00, 96.00),  -- Patricia - EXCELENTE
 (53, 68.00, 70.00, 72.00);  -- Fernando - APROBADO
 
--- ============================================
 -- 7. ASISTENCIAS (attendance)
--- ============================================
 -- 20 días de clases por grupo (simulando un semestre)
 -- Casos: estudiantes con buena asistencia, regular, mala
 
@@ -350,15 +344,3 @@ INSERT INTO attendance (enrollment_id, date, present) VALUES
 (49, '2025-01-13', FALSE), (49, '2025-01-15', TRUE), (49, '2025-01-20', FALSE),
 (49, '2025-01-22', TRUE), (49, '2025-01-27', FALSE), (49, '2025-01-29', TRUE);
 
--- ============================================
--- FIN DEL SEED
--- ============================================
--- Resumen de datos insertados:
--- - 15 estudiantes (5 ISC, 5 IND, 5 ADM)
--- - 5 profesores
--- - 8 cursos
--- - 20 grupos (8 en 2024-1, 8 en 2024-2, 4 en 2025-1)
--- - 53 inscripciones
--- - 53 registros de calificaciones
--- - 125 registros de asistencia
--- ============================================

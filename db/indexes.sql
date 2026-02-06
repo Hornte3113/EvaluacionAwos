@@ -2,7 +2,6 @@
 -- Propósito: Acelerar filtros por término académico
 -- Usado en: vw_course_performance, vw_teacher_load, vw_attendance_by_group, vw_rank_students
 -- Razón: La columna 'term' la uso mucho en  WHERE clauses
--- Tipo: B-tree (default para búsquedas de igualdad y rangos)
 
 CREATE INDEX IF NOT EXISTS idx_groups_term 
 ON groups(term);

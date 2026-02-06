@@ -11,7 +11,7 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: lab_reportes_db
+    container_name: awos_db
     
     # Variables de entorno para PostgreSQL
     environment:
@@ -24,10 +24,10 @@ services:
       - "5438:5432"
     
     # Volúmenes para persistencia y scripts SQL
-    volumes:
+    #volumes:
       # Scripts SQL se ejecutan automáticamente al iniciar
       # Se ejecutan en orden alfabético: 01_schema.sql, 02_seed.sql, etc.
-      - ./db:/docker-entrypoint-initdb.d
+      #- ./db:/docker-entrypoint-initdb.d
       
       # Persistencia de datos 
       # Descomenta la siguiente línea para persistir datos entre reinicios
@@ -46,38 +46,38 @@ services:
 
   # Servicio de Dashboard (Next.js)
 
-  dashboard:
-    build:
-      context: ./dashboard
-      dockerfile: Dockerfile
+  #dashboard:
+   # build:
+    #  context: ./dashboard
+     # dockerfile: Dockerfile
     
-    container_name: lab_reportes_dashboard
+    #container_name: lab_reportes_dashboard
     
     # Variables de entorno para la aplicación
-    environment:
+    #environment:
       # Conexión a la base de datos
       # IMPORTANTE: El host es 'db' (nombre del servicio), no 'localhost'
-      DATABASE_URL: "postgresql://app_client:secure_password@db:5432/postgres"
+     # DATABASE_URL: "postgresql://app_client:secure_password@db:5432/postgres"
       
       # Variables de Next.js
-      NODE_ENV: production
-      NEXT_TELEMETRY_DISABLED: 1
+    #  NODE_ENV: production
+     # NEXT_TELEMETRY_DISABLED: 1
     
     # Puerto expuesto (host:container)
-    ports:
-      - "3000:3000"
+   # ports:
+   #   - "3000:3000"
     
     # Esperar a que PostgreSQL esté listo antes de iniciar
-    depends_on:
-      db:
-        condition: service_healthy
+    #depends_on:
+    #  db:
+    #    condition: service_healthy
     
     # Red interna
-    networks:
-      - app-network
+    #networks:
+     # - app-network
     
     # Restart policy
-    restart: unless-stopped
+    #restart: unless-stopped
 
 # ==========================================
 # Redes
