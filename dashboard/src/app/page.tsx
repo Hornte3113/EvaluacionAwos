@@ -12,7 +12,7 @@ export default function DashboardHome() {
   const summaryCards = [
     { 
       title: "Rendimiento de Cursos", 
-      href: "/reports/performance", 
+      href: "/reports/course-performance",
       description: "Análisis de tasas de aprobación y promedios generales por materia y periodo.", 
       icon: ChartBarIcon,
       color: "bg-blue-500"
