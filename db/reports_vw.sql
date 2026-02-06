@@ -324,12 +324,12 @@ SELECT
     ) AS row_number_in_program,
     -- Window Function: PERCENT_RANK (percentil)
     ROUND(
-        PERCENT_RANK() OVER (
-            PARTITION BY program, term 
-            ORDER BY avg_grade DESC
-        ) * 100,
-        2
-    ) AS percentile,
+    (PERCENT_RANK() OVER (
+        PARTITION BY program, term 
+        ORDER BY avg_grade DESC
+    ) * 100)::NUMERIC,
+    2
+) AS percentile,
     -- Window Function: Total de estudiantes en el programa/término
     COUNT(*) OVER (PARTITION BY program, term) AS total_students_in_program,
     -- Campo calculado: categoría de GPA
