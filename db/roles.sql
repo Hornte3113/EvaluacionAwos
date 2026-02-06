@@ -3,7 +3,7 @@ DROP ROLE IF EXISTS app_client;
 -- Crear rol con permisos mínimos
 CREATE ROLE app_client WITH
     LOGIN                         
-    PASSWORD 'secure_password'     
+    PASSWORD :'app_client_password'
     NOSUPERUSER                    
     NOCREATEDB                     
     NOCREATEROLE                   
