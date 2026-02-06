@@ -26,7 +26,7 @@ export default function DashboardHome() {
     },
     { 
       title: "Estudiantes en Riesgo", 
-      href: "/reports/risk", 
+      href: "/reports/students-at-risk",
       description: "Identificación de alumnos con alto riesgo de reprobación por notas o faltas.", 
       icon: ExclamationTriangleIcon,
       color: "bg-red-500"
