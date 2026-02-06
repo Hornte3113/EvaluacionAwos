@@ -20,7 +20,7 @@ export const SearchSchema = z.object({
 });
 
 // Whitelist de programas permitidos
-export const ALLOWED_PROGRAMS = ['ISC', 'II', 'IM', 'IGE', 'LA'] as const;
+export const ALLOWED_PROGRAMS = ['ISC', 'IND', 'ADM'] as const;
 
 export const ProgramFilterSchema = z.object({
   program: z.enum(ALLOWED_PROGRAMS),
