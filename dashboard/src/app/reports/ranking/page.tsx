@@ -1,14 +1,13 @@
-import { query } from '@/lib/db';
-import { StudentRanking } from '@/types/reports';
 import { ProgramFilterSchema, ALLOWED_PROGRAMS } from '@/lib/validations';
 import Link from 'next/link';
+import { getRankingReport } from '@/services/rankingService';
 
 export default async function RankingReport({
   searchParams,
 }: {
   searchParams: Promise<{ program?: string; term?: string; page?: string; limit?: string }>;
 }) {
-  // Validar parámetros con whitelist de programas
+  // Validar parámetros 
   const validated = ProgramFilterSchema.safeParse(await searchParams);
 
   if (!validated.success) {
@@ -33,54 +32,9 @@ export default async function RankingReport({
   }
 
   const { program, term, page, limit } = validated.data;
-  const offset = (page - 1) * limit;
 
-  // Query para contar total
-  let countQuery = `SELECT COUNT(*) as total FROM vw_rank_students WHERE program = $1`;
-  const countParams: any[] = [program];
-
-  if (term) {
-    countQuery += ` AND term = $2`;
-    countParams.push(term);
-  }
-
-  const countResult = await query<{ total: string }>(countQuery, countParams);
-  const total = parseInt(countResult[0].total);
-  const totalPages = Math.ceil(total / limit);
-
-  // Query principal
-  let sqlQuery = `SELECT * FROM vw_rank_students WHERE program = $1`;
-  const params: any[] = [program];
-
-  if (term) {
-    sqlQuery += ` AND term = $2`;
-    params.push(term);
-  }
-
-  sqlQuery += ` ORDER BY rank_in_program ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-  params.push(limit, offset);
-
-  const raw = await query<StudentRanking>(sqlQuery, params);
-
-  // pg devuelve campos numeric como string, convertimos a number
-  const data = raw.map(row => ({
-    ...row,
-    courses_taken: Number(row.courses_taken),
-    total_credits: Number(row.total_credits),
-    avg_grade: Number(row.avg_grade),
-    rank_in_program: Number(row.rank_in_program),
-    row_number_in_program: Number(row.row_number_in_program),
-    percentile: Number(row.percentile),
-    total_students_in_program: Number(row.total_students_in_program),
-  }));
-
-  // KPIs
-  const topStudent = data.length > 0 ? data[0] : null;
-  const avgGPATop10 = data.length > 0
-    ? (data.slice(0, Math.min(10, data.length))
-        .reduce((sum, s) => sum + s.avg_grade, 0) / Math.min(10, data.length)).toFixed(2)
-    : 0;
-  const excellentCount = data.filter(s => s.gpa_category === 'Excelente').length;
+  // Obtenemos data, paginación y KPIs 
+  const { data, pagination, kpis } = await getRankingReport(program, term, page, limit);
 
   return (
     <div className="space-y-6">
@@ -155,25 +109,25 @@ export default async function RankingReport({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Total Estudiantes</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{total}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{pagination.total}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Promedio Top 10</p>
-          <p className="text-3xl font-bold text-yellow-600 mt-2">{avgGPATop10}</p>
+          <p className="text-3xl font-bold text-yellow-600 mt-2">{kpis.avgGPATop10}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Estudiantes Excelentes</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{excellentCount}</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">{kpis.excellentCount}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Mejor Promedio</p>
           <p className="text-3xl font-bold text-purple-600 mt-2">
-            {topStudent ? topStudent.avg_grade.toFixed(2) : 'N/A'}
+            {kpis.topStudent ? kpis.topStudent.avg_grade.toFixed(2) : 'N/A'}
           </p>
         </div>
       </div>
 
-      {/* Top 3 Destacados */}
+      {/* Top 3 Destacados (Solo en página 1) */}
       {data.length > 0 && page === 1 && (
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-6 rounded-lg border border-yellow-200">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Top 3 Estudiantes</h2>
@@ -308,24 +262,24 @@ export default async function RankingReport({
           </table>
         </div>
 
-        {/* Paginación */}
-        {totalPages > 1 && (
+        {/* Paginación - Usamos pagination.totalPages */}
+        {pagination.totalPages > 1 && (
           <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t">
             <div className="text-sm text-gray-700">
-              Página {page} de {totalPages} • Total: {total} estudiantes
+              Página {pagination.page} de {pagination.totalPages} • Total: {pagination.total} estudiantes
             </div>
             <div className="flex gap-2">
-              {page > 1 && (
+              {pagination.page > 1 && (
                 <Link
-                  href={`?program=${program}&term=${term || ''}&page=${page - 1}&limit=${limit}`}
+                  href={`?program=${program}&term=${term || ''}&page=${pagination.page - 1}&limit=${limit}`}
                   className="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 text-sm"
                 >
                   Anterior
                 </Link>
               )}
-              {page < totalPages && (
+              {pagination.page < pagination.totalPages && (
                 <Link
-                  href={`?program=${program}&term=${term || ''}&page=${page + 1}&limit=${limit}`}
+                  href={`?program=${program}&term=${term || ''}&page=${pagination.page + 1}&limit=${limit}`}
                   className="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 text-sm"
                 >
                   Siguiente

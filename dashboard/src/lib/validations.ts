@@ -1,25 +1,25 @@
 import { z } from 'zod';
 
-// Esquema para paginación
+// para paginación
 export const PaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
-// Esquema para filtro de término (obligatorio en performance)
+// filtro de término (obligatorio en performance)
 export const TermFilterSchema = z.object({
   term: z.string().min(1, 'El término es obligatorio').default('2024-1'),
   program: z.string().optional(),
 });
 
-// Esquema para búsqueda de estudiantes
+// pala búsqueda de estudiantes
 export const SearchSchema = z.object({
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
-// Whitelist de programas permitidos
+// Whitelist de los programas permitidos
 export const ALLOWED_PROGRAMS = ['ISC', 'IND', 'ADM'] as const;
 
 export const ProgramFilterSchema = z.object({

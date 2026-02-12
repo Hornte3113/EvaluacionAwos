@@ -1,5 +1,5 @@
-import { query } from '@/lib/db';
-import { AttendanceByGroup } from '@/types/reports';
+// src/app/reports/attendance/page.tsx
+import { getAttendanceReport } from '@/services/attendanceService';
 
 export default async function AttendanceReport({
   searchParams,
@@ -7,37 +7,7 @@ export default async function AttendanceReport({
   searchParams: Promise<{ term?: string }>;
 }) {
   const { term } = await searchParams;
-
-  // Query con filtro opcional de término
-  let sqlQuery = `SELECT * FROM vw_attendance_by_group`;
-  const params: any[] = [];
-
-  if (term) {
-    sqlQuery += ` WHERE term = $1`;
-    params.push(term);
-  }
-
-  sqlQuery += ` ORDER BY avg_attendance_rate ASC`;
-
-  const raw = await query<AttendanceByGroup>(sqlQuery, params);
-
-  // pg devuelve campos numeric como string, convertimos a number
-  const data = raw.map(row => ({
-    ...row,
-    avg_attendance_rate: Number(row.avg_attendance_rate),
-    total_students: Number(row.total_students),
-    total_classes: Number(row.total_classes),
-    students_good_attendance: Number(row.students_good_attendance),
-    students_poor_attendance: Number(row.students_poor_attendance),
-  }));
-
-  // KPIs
-  const avgAttendanceGlobal = data.length > 0
-    ? (data.reduce((sum, row) => sum + row.avg_attendance_rate, 0) / data.length).toFixed(2)
-    : 0;
-  const excellentGroups = data.filter(g => g.attendance_category === 'EXCELLENT').length;
-  const poorGroups = data.filter(g => g.attendance_category === 'POOR').length;
-  const totalGroups = data.length;
+  const { data, kpis } = await getAttendanceReport(term);
 
   return (
     <div className="space-y-6">
@@ -77,23 +47,22 @@ export default async function AttendanceReport({
         </form>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Total Grupos</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalGroups}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{kpis.totalGroups}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Asistencia Promedio</p>
-          <p className="text-3xl font-bold text-purple-600 mt-2">{avgAttendanceGlobal}%</p>
+          <p className="text-3xl font-bold text-purple-600 mt-2">{kpis.avgAttendanceGlobal}%</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Grupos Excelentes</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{excellentGroups}</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">{kpis.excellentGroups}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Grupos Deficientes</p>
-          <p className="text-3xl font-bold text-red-600 mt-2">{poorGroups}</p>
+          <p className="text-3xl font-bold text-red-600 mt-2">{kpis.poorGroups}</p>
         </div>
       </div>
 

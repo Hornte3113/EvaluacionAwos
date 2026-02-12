@@ -1,13 +1,11 @@
-import { query } from '@/lib/db';
-import { CoursePerformance } from '@/types/reports';
 import { TermFilterSchema } from '@/lib/validations';
+import { getCoursePerformanceReport } from '@/services/coursePerformanceService';
 
 export default async function PerformanceReport({
   searchParams,
 }: {
   searchParams: Promise<{ term?: string; program?: string }>;
 }) {
-  // Validar parámetros con Zod
   const validated = TermFilterSchema.safeParse(await searchParams);
 
   if (!validated.success) {
@@ -21,44 +19,8 @@ export default async function PerformanceReport({
 
   const { term, program } = validated.data;
 
-  // Construcción de query parametrizada
-  let sqlQuery = `
-    SELECT * FROM vw_course_performance
-    WHERE term = $1
-  `;
-  const params: any[] = [term];
 
-  if (program) {
-    sqlQuery += ` AND program = $2`;
-    params.push(program);
-  }
-
-  sqlQuery += ` ORDER BY pass_rate DESC`;
-
-  // Ejecutar query
-  const raw = await query<CoursePerformance>(sqlQuery, params);
-
-  // pg devuelve campos numeric como string, convertimos a number
-  const data = raw.map(row => ({
-    ...row,
-    total_students: Number(row.total_students),
-    avg_grade: Number(row.avg_grade),
-    passed_students: Number(row.passed_students),
-    failed_students: Number(row.failed_students),
-    pass_rate: Number(row.pass_rate),
-    excellent_students: Number(row.excellent_students),
-    min_grade: Number(row.min_grade),
-    max_grade: Number(row.max_grade),
-    credits: Number(row.credits),
-  }));
-
-  // Calcular KPIs
-  const totalStudents = data.reduce((sum, row) => sum + row.total_students, 0);
-  const avgPassRate = data.length > 0
-    ? (data.reduce((sum, row) => sum + row.pass_rate, 0) / data.length).toFixed(2)
-    : 0;
-  const totalFailed = data.reduce((sum, row) => sum + row.failed_students, 0);
-  const excellentStudents = data.reduce((sum, row) => sum + row.excellent_students, 0);
+  const { data, kpis } = await getCoursePerformanceReport(term, program);
 
   return (
     <div className="space-y-6">
@@ -120,19 +82,19 @@ export default async function PerformanceReport({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Total Estudiantes</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{totalStudents}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{kpis.totalStudents}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Tasa de Aprobación Promedio</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">{avgPassRate}%</p>
+          <p className="text-3xl font-bold text-green-600 mt-2">{kpis.avgPassRate}%</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Estudiantes Reprobados</p>
-          <p className="text-3xl font-bold text-red-600 mt-2">{totalFailed}</p>
+          <p className="text-3xl font-bold text-red-600 mt-2">{kpis.totalFailed}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Excelencia (≥90)</p>
-          <p className="text-3xl font-bold text-purple-600 mt-2">{excellentStudents}</p>
+          <p className="text-3xl font-bold text-purple-600 mt-2">{kpis.excellentStudents}</p>
         </div>
       </div>
 

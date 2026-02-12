@@ -1,14 +1,12 @@
-import { query } from '@/lib/db';
-import { StudentAtRisk } from '@/types/reports';
 import { SearchSchema } from '@/lib/validations';
 import Link from 'next/link';
+import { getStudentRiskReport } from '@/services/studentRiskService';
 
 export default async function RiskReport({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; page?: string; limit?: string }>;
 }) {
-  // Validar parámetros
   const validated = SearchSchema.safeParse(await searchParams);
 
   if (!validated.success) {
@@ -21,62 +19,8 @@ export default async function RiskReport({
   }
 
   const { search, page, limit } = validated.data;
-  const offset = (page - 1) * limit;
 
-  // Query para contar total
-  let countQuery = `SELECT COUNT(*) as total FROM vw_students_at_risk`;
-  const countParams: any[] = [];
-
-  if (search) {
-    countQuery += ` WHERE LOWER(student_name) LIKE LOWER($1) OR LOWER(student_email) LIKE LOWER($1)`;
-    countParams.push(`%${search}%`);
-  }
-
-  const countResult = await query<{ total: string }>(countQuery, countParams);
-  const total = parseInt(countResult[0].total);
-  const totalPages = Math.ceil(total / limit);
-
-  // Query principal
-  let sqlQuery = `SELECT * FROM vw_students_at_risk`;
-  const params: any[] = [];
-
-  if (search) {
-    sqlQuery += ` WHERE LOWER(student_name) LIKE LOWER($1) OR LOWER(student_email) LIKE LOWER($1)`;
-    params.push(`%${search}%`);
-  }
-
-  sqlQuery += ` ORDER BY 
-    CASE risk_level 
-      WHEN 'CRITICAL' THEN 1 
-      WHEN 'HIGH' THEN 2 
-      WHEN 'MEDIUM' THEN 3 
-      ELSE 4 
-    END, 
-    avg_grade ASC
-    LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-  params.push(limit, offset);
-
-  const raw = await query<StudentAtRisk>(sqlQuery, params);
-
-  // pg devuelve campos numeric como string, convertimos a number
-  const data = raw.map(row => ({
-    ...row,
-    avg_grade: Number(row.avg_grade),
-    attendance_rate: Number(row.attendance_rate),
-    total_absences: Number(row.total_absences),
-    courses_failed: Number(row.courses_failed),
-    total_enrollments: Number(row.total_enrollments),
-  }));
-
-  // KPIs
-  const criticalCount = data.filter(s => s.risk_level === 'CRITICAL').length;
-  const highCount = data.filter(s => s.risk_level === 'HIGH').length;
-  const avgGradeAtRisk = data.length > 0
-    ? (data.reduce((sum, s) => sum + s.avg_grade, 0) / data.length).toFixed(2)
-    : 0;
-  const avgAttendance = data.length > 0
-    ? (data.reduce((sum, s) => sum + s.attendance_rate, 0) / data.length).toFixed(2)
-    : 0;
+  const { data, pagination, kpis } = await getStudentRiskReport(search, page, limit);
 
   return (
     <div className="space-y-6">
@@ -138,19 +82,19 @@ export default async function RiskReport({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Total en Riesgo</p>
-          <p className="text-3xl font-bold text-red-600 mt-2">{total}</p>
+          <p className="text-3xl font-bold text-red-600 mt-2">{pagination.total}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Riesgo Crítico</p>
-          <p className="text-3xl font-bold text-red-800 mt-2">{criticalCount}</p>
+          <p className="text-3xl font-bold text-red-800 mt-2">{kpis.criticalCount}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Promedio Calificaciones</p>
-          <p className="text-3xl font-bold text-yellow-600 mt-2">{avgGradeAtRisk}</p>
+          <p className="text-3xl font-bold text-yellow-600 mt-2">{kpis.avgGradeAtRisk}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 font-medium">Asistencia Promedio</p>
-          <p className="text-3xl font-bold text-orange-600 mt-2">{avgAttendance}%</p>
+          <p className="text-3xl font-bold text-orange-600 mt-2">{kpis.avgAttendance}%</p>
         </div>
       </div>
 
@@ -245,23 +189,23 @@ export default async function RiskReport({
         </div>
 
         {/* Paginación */}
-        {totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t">
             <div className="text-sm text-gray-700">
-              Página {page} de {totalPages} • Total: {total} estudiantes
+              Página {pagination.page} de {pagination.totalPages} • Total: {pagination.total} estudiantes
             </div>
             <div className="flex gap-2">
-              {page > 1 && (
+              {pagination.page > 1 && (
                 <Link
-                  href={`?search=${search || ''}&page=${page - 1}&limit=${limit}`}
+                  href={`?search=${search || ''}&page=${pagination.page - 1}&limit=${limit}`}
                   className="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 text-sm"
                 >
                   Anterior
                 </Link>
               )}
-              {page < totalPages && (
+              {pagination.page < pagination.totalPages && (
                 <Link
-                  href={`?search=${search || ''}&page=${page + 1}&limit=${limit}`}
+                  href={`?search=${search || ''}&page=${pagination.page + 1}&limit=${limit}`}
                   className="px-4 py-2 bg-white border rounded-md hover:bg-gray-50 text-sm"
                 >
                   Siguiente
